@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://jgoodell2.github.io/itemGen/webComponents/percentGauge.js"></script>
+    <title>Learning Pathway Graph Demo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: #f8f9fa;
+        }
+        #tooltip {
+            position: absolute;
+            background-color: rgba(0, 0, 0, 0.7);
+            color: #fff;
+            padding: 5px;
+            border-radius: 5px;
+            font-size: 12px;
+            pointer-events: none;
+            visibility: hidden;
+            z-index: 1000;
+        }
+    </style>
+    <script type="module">
+
+        async function createInitialVisualization(data) {
+            // Create maps for nodes and dependencies
+            const nodes = new Map();
+            const dependencies = new Map();
+            let targetNodeId;
+            
+            // Process framework data
+            data['@graph'].forEach(node => {
+                if (node['@type'] === 'scd:CompetencyFramework') {
+                    targetNodeId = node['scd:hasTargetMember'][0];
+                }
+                if (node['@type'] === 'CompetencyDefinition') {
+                    nodes.set(node['@id'], node);
+                    if (node['scd:isSupportedBy']) {
+                        dependencies.set(node['@id'], node['scd:isSupportedBy']);
+                    }
+                }
+            });
+
+            // Calculate positions and create visualization
+            const positions = new Map();
+            const processed = new Set();
+
+            function calculatePositions(nodeId, column, row = 0) {
+                if (!nodes.has(nodeId)) return;
+                
+                const node = nodes.get(nodeId);
+                const code = node['scd:referenceCode'];
+                
+                const x = window.innerWidth * (0.8 - column * 0.3);
+                const y = window.innerHeight * (0.7 - row * 0.2);
+                
+                const positionKey = `${code}-${column}-${row}`;
+                positions.set(positionKey, { x, y, id: nodeId });
+                processed.add(nodeId);
+
+                const prerequisites = dependencies.get(nodeId) || [];
+                prerequisites.forEach((preReqId, index) => {
+                    calculatePositions(preReqId, column + 1, index);
+                });
+            }
+
+            // Start from target node
+            calculatePositions(targetNodeId, 0);
+
+            // Create nodes with placeholder values
+            positions.forEach((position, key) => {
+                const node = nodes.get(position.id);
+                createCompetencyNode(
+                    position.id,
+                    node['scd:competencyStatement'],
+                    node['scd:referenceCode'],
+                    position.x,
+                    position.y,
+                    0.0  // Placeholder value
+                );
+            });
+
+            // Draw arrows
+            dependencies.forEach((prereqs, nodeId) => {
+                prereqs.forEach(prereqId => {
+                    const fromNodes = Array.from(positions.values())
+                        .filter(pos => pos.id === prereqId);
+                    const toNodes = Array.from(positions.values())
+                        .filter(pos => pos.id === nodeId);
+                    
+                    fromNodes.forEach(fromPos => {
+                        toNodes.forEach(toPos => {
+                            const fromNode = document.getElementById('gauge-' + prereqId);
+                            const toNode = document.getElementById('gauge-' + nodeId);
+                            if (fromNode && toNode) {
+                                const fromRect = fromNode.getBoundingClientRect();
+                                const toRect = toNode.getBoundingClientRect();
+                                const svg = document.getElementById('arrows') || createSvgElement();
+                                drawArrow(svg,
+                                    fromRect.left + fromRect.width/2,
+                                    fromRect.top + fromRect.height/2,
+                                    toRect.left + toRect.width/2,
+                                    toRect.top + toRect.height/2
+                                );
+                            }
+                        });
+                    });
+                });
+            });
+
+            return { nodes, positions };
+        }
+ 
+        async function fetchCompetencyData() {
+            try {
+                // First fetch the competency framework data
+                const response = await fetch('competencyData.json');
+                const data = await response.json();
+                
+                // Create initial visualization with placeholder values
+                const { nodes, positions } = await createInitialVisualization(data);
+
+                // Get URL parameters
+                const urlParams = new URLSearchParams(window.location.search);
+                const userId = urlParams.get('userid');
+
+                // Update nodes with BKT data
+                for (const [nodeId, node] of nodes) {
+                    try {
+                        console.log(`Processing node:`, {
+                            id: nodeId,
+                            code: node['scd:referenceCode'],
+                            statement: node['scd:competencyStatement']
+                        });
+
+                        const inferableUrl = `https://bkt.inferable.rest?` + 
+                            new URLSearchParams({
+                                competencyid: nodeId,
+                                userid: userId || 'https://example.com/users/user-v1:1abcb33beeb811dca15f0ac3e47b887b'
+                            }).toString();
+                        
+                        console.log(`Fetching inference for ${node['scd:referenceCode']} using: ${inferableUrl}`);
+
+                        const response = await fetch(inferableUrl, {
+                            headers: {
+                                'Accept': 'application/json'
+                            },
+                            cache: 'no-store'
+                        });
+
+                        // Handle the response
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! Status: ${response.status}`);
+                        }
+
+                        const data = await response.json();
+                        console.log(`Data returned: ${JSON.stringify(data)}`);
+                        
+                        // Update the gauge with new value
+                        const gauge = document.getElementById('gauge-' + nodeId);
+                        if (gauge) {
+                            gauge.setAttribute('gauge-value-decimal', data.prediction.toString());
+                        }
+
+                    } catch (error) {
+                        console.error(`Error fetching BKT data for ${nodeId}:`, error);
+                    }
+                }
+
+            } catch (error) {
+                console.error("Error fetching data:", error);
+            }
+        }
+        // Initialize on page load
+        window.onload = fetchCompetencyData;
+    </script>
+</head>
+<body>
+    <div id="tooltip"></div>
+
+    <script>
+        function showTooltip(text, x, y) {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.textContent = text;
+            tooltip.style.left = (x + 10) + 'px';
+            tooltip.style.top = (y + 10) + 'px';
+            tooltip.style.visibility = 'visible';
+        }
+
+        function hideTooltip() {
+            const tooltip = document.getElementById('tooltip');
+            tooltip.style.visibility = 'hidden';
+        }
+
+        function createSvgElement() {
+            const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+            svg.setAttribute('id', 'arrows');
+            svg.style.position = 'absolute';
+            svg.style.top = '0';
+            svg.style.left = '0';
+            svg.style.width = '100%';
+            svg.style.height = '100%';
+            svg.style.pointerEvents = 'none';
+            svg.style.zIndex = '998';
+            document.body.appendChild(svg);
+            return svg;
+        }
+
+        function drawArrow(svg, x1, y1, x2, y2) {// Calculate the direction and length
+            const dx = x2 - x1;
+            const dy = y2 - y1;
+            const length = Math.sqrt(dx * dx + dy * dy);
+            
+            // Shorten both ends by 35 pixels (adjust this value as needed)
+            const shortenBy = 35;
+            const ratio = (length - (shortenBy * 2)) / length;
+            
+            // New start and end points
+            const newX1 = x1 + dx * (shortenBy / length);
+            const newY1 = y1 + dy * (shortenBy / length);
+            const newX2 = x2 - dx * (shortenBy / length);
+            const newY2 = y2 - dy * (shortenBy / length);
+
+            // Create the line with new points
+            const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+            line.setAttribute('x1', newX1);
+            line.setAttribute('y1', newY1);
+            line.setAttribute('x2', newX2);
+            line.setAttribute('y2', newY2);
+            line.setAttribute('stroke', 'black');
+            line.setAttribute('stroke-width', '2');
+            
+            // Create arrowhead marker if it doesn't exist
+            if (!document.getElementById('arrowhead')) {
+                const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+                const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+                marker.setAttribute('id', 'arrowhead');
+                marker.setAttribute('markerWidth', '10');
+                marker.setAttribute('markerHeight', '7');
+                marker.setAttribute('refX', '9');
+                marker.setAttribute('refY', '3.5');
+                marker.setAttribute('orient', 'auto');
+
+                const polygon = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
+                polygon.setAttribute('points', '0 0, 10 3.5, 0 7');
+                polygon.setAttribute('fill', 'black');
+
+                marker.appendChild(polygon);
+                defs.appendChild(marker);
+                svg.appendChild(defs);
+            }
+
+            // Add arrowhead to line
+            line.setAttribute('marker-end', 'url(#arrowhead)');
+
+            svg.appendChild(line);
+        }
+
+        function createCompetencyNode(id, text, code, x, y, bktValue) {
+            // Create the gauge with the BKT value
+            const gauge = document.createElement('percent-gauge');
+            gauge.setAttribute('id', 'gauge-' + id);
+            gauge.setAttribute('gauge-band-color', 'green');
+            gauge.setAttribute('gauge-value-decimal', bktValue.toString());
+            
+            // Create background circle div
+            const background = document.createElement('div');
+            background.setAttribute('id', 'background-' + id);
+            background.style.position = 'absolute';
+            background.style.left = x + 'px';
+            background.style.top = y + 'px';
+            background.style.width = '60px';
+            background.style.height = '60px';
+            background.style.backgroundColor = 'white';
+            background.style.borderRadius = '50%';
+            background.style.boxShadow = '0 0 5px rgba(0,0,0,0.1)';
+            background.style.zIndex = '999';
+
+            // Create the gauge
+            gauge.setAttribute('id', 'gauge-' + id);
+            gauge.setAttribute('gauge-band-color', 'green');
+            gauge.setAttribute('gauge-value-decimal', bktValue.toString());
+            gauge.style.position = 'absolute';
+            gauge.style.left = (x - 25) + 'px';
+            gauge.style.top = y + 'px';
+            gauge.style.width = '60px';
+            gauge.style.height = '60px';
+            gauge.style.zIndex = '1000';
+            gauge.style.display = 'flex';
+            gauge.style.justifyContent = 'center';
+            gauge.style.alignItems = 'center';
+            gauge.style.fontSize = '14px';
+            gauge.style.fontWeight = 'bold';
+
+            // Create label
+            const label = document.createElement('div');
+            label.textContent = code;
+            label.style.position = 'absolute';
+            label.style.left = x + 'px';
+            label.style.top = (y + 85) + 'px';
+            label.style.width = '60px';
+            label.style.textAlign = 'center';
+            label.style.fontSize = '12px';
+            label.style.fontWeight = 'bold';
+            label.style.zIndex = '1000';
+
+            // Create hover text
+            let tooltipText = `${code}: ${text}`;
+
+            // Add hover events to both background and gauge
+            const addHoverEvents = (element) => {
+                element.addEventListener('mouseenter', (e) => {
+                    showTooltip(tooltipText, e.clientX, e.clientY);
+                });
+                element.addEventListener('mousemove', (e) => {
+                    showTooltip(tooltipText, e.clientX, e.clientY);
+                });
+                element.addEventListener('mouseleave', () => {
+                    hideTooltip();
+                });
+            };
+
+            // Add hover events to background and gauge
+            addHoverEvents(background);
+            addHoverEvents(gauge);
+
+            document.body.appendChild(background);
+            document.body.appendChild(gauge);
+            document.body.appendChild(label);
+        }
+
+        async function initializeVisualization() {
+            await fetchData();
+        }
+
+        window.onload = initializeVisualization;
+    </script>
+</body>
+</html>
