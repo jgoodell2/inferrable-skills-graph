@@ -1,0 +1,67 @@
+{
+    "@context": "https://standards.ieee.org/1484.20.3/context.jsonld",
+    "@graph": [
+        {
+            "@type": "scd:CompetencyFramework",
+            "@id": "https://example.org/scd/math//1a66f1ae-9f7d-4c86-9e24-d0f022279578",
+            "scd:competencyStatement": "Mathematics",
+            "scd:name": "Mathematics",
+            "scd:typeLabel": "Framework",
+            "creator": "Legacy CCSS Frameworks",
+            "scd:referenceCode": "",
+            "scd:hasMember": [
+                "https://example.org/scd/math/de553a31-8298-4a77-9f36-f7845d376840",
+                "https://example.org/scd/math/55ad59d8-2012-48d5-a95e-b596a1f11dbe",
+                "https://example.org/scd/math/471254d1-879a-4649-b330-b92a93ee56be",
+                "https://example.org/scd/math/bdd3e128-9efa-49d7-9611-94e167844a55",
+                "https://example.org/scd/math/024421ce-383c-413a-8c80-2ade72c5bfd8"
+            ],
+            "scd:hasTargetMember": [
+                "https://example.org/scd/math/024421ce-383c-413a-8c80-2ade72c5bfd8"
+            ]
+        },
+        {
+            "@type": "CompetencyDefinition",
+            "@id": "https://example.org/scd/math/de553a31-8298-4a77-9f36-f7845d376840",
+            "scd:referenceCode": "6.EE.2a",
+            "scd:competencyStatement": "Write, read, and evaluate expressions in which letters stand for numbers. A) Write expressions that record operations with numbers and with letters standing for numbers. For example, express the calculation Subtract y from 5 as 5 – y.",
+            "ceasn:educationLevel": ["06"]
+        },
+        {
+            "@type": "CompetencyDefinition",
+            "@id": "https://example.org/scd/math/55ad59d8-2012-48d5-a95e-b596a1f11dbe",
+            "scd:referenceCode": "6.EE.4",
+            "scd:competencyStatement": "Identify when two expressions are equivalent (i.e., when the two expressions name the same number regardless of which value is substituted into them). For example, the expressions y + y + y and 3y are equivalent because they name the same number regardless of which number y stands for.",
+            "ceasn:educationLevel": ["06"]
+        },
+        {
+            "@type": "CompetencyDefinition",
+            "@id": "https://example.org/scd/math/471254d1-879a-4649-b330-b92a93ee56be",
+            "scd:referenceCode": "6.EE.5",
+            "scd:competencyStatement": "Understand solving an equation or inequality as a process of answering a question: which values from a specified set, if any, make the equation or inequality true? Use substitution to determine whether a given number in a specified set makes an equation or inequality true.",
+            "ceasn:educationLevel": ["06"]
+        },
+        {
+            "@type": "CompetencyDefinition",
+            "@id": "https://example.org/scd/math/bdd3e128-9efa-49d7-9611-94e167844a55",
+            "scd:referenceCode": "6.EE.6",
+            "scd:competencyStatement": "Use variables to represent numbers and write expressions when solving a real-world or mathematical problem; understand that a variable can represent an unknown number, or, depending on the purpose at hand, any number in a specified set.",
+            "ceasn:educationLevel": ["06"],
+            "scd:isSupportedBy": [
+                "https://example.org/scd/math/de553a31-8298-4a77-9f36-f7845d376840"
+            ]
+        },
+        {
+            "@type": "CompetencyDefinition",
+            "@id": "https://example.org/scd/math/024421ce-383c-413a-8c80-2ade72c5bfd8",
+            "scd:referenceCode": "6.EE.7",
+            "scd:competencyStatement": "Solve real-world and mathematical problems by writing and solving equations of the form x + p = q and px = q for cases in which p, q and x are all nonnegative rational numbers.",
+            "ceasn:educationLevel": ["06"],
+            "scd:isSupportedBy": [
+                "https://example.org/scd/math/bdd3e128-9efa-49d7-9611-94e167844a55",
+                "https://example.org/scd/math/471254d1-879a-4649-b330-b92a93ee56be",
+                "https://example.org/scd/math/55ad59d8-2012-48d5-a95e-b596a1f11dbe"
+            ]
+        }
+    ]
+}
