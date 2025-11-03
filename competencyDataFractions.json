@@ -1,0 +1,58 @@
+{
+    "@context": "https://opensource.ieee.org/scd/scd/resources/context.jsonld",
+    "@graph": [
+        {
+            "@type": "scd:CompetencyFramework",
+            "@id": "https://example.org/scd/math/ratios-proportions",
+            "scd:competencyStatement": "Mathematics - Ratios and Proportional Relationships",
+            "scd:name": "Mathematics",
+            "scd:typeLabel": "Framework",
+            "creator": "Common Core State Standards",
+            "scd:referenceCode": "",
+            "scd:hasMember": [
+                "https://example.org/scd/math/7rp3",
+                "https://example.org/scd/math/7rp2",
+                "https://example.org/scd/math/7rp2a",
+                "https://example.org/scd/math/7rp2c"
+            ],
+            "scd:hasTargetMember": [
+                "https://example.org/scd/math/7rp3"
+            ]
+        },
+        {
+            "@type": "CompetencyDefinition",
+            "@id": "https://example.org/scd/math/7rp3",
+            "scd:referenceCode": "CCSS.MATH.CONTENT.7.RP.A.3",
+            "scd:competencyStatement": "Use proportional relationships to solve multi-step ratio and percent problems.",
+            "ceasn:educationLevel": ["07"],
+            "scd:isSupportedBy": [
+                "https://example.org/scd/math/7rp2"
+            ]
+        },
+        {
+            "@type": "CompetencyDefinition",
+            "@id": "https://example.org/scd/math/7rp2",
+            "scd:referenceCode": "CCSS.MATH.CONTENT.7.RP.A.2",
+            "scd:competencyStatement": "Recognize and represent proportional relationships between quantities.",
+            "ceasn:educationLevel": ["07"],
+            "scd:isSupportedBy": [
+                "https://example.org/scd/math/7rp2a",
+                "https://example.org/scd/math/7rp2c"
+            ]
+        },
+        {
+            "@type": "CompetencyDefinition",
+            "@id": "https://example.org/scd/math/7rp2a",
+            "scd:referenceCode": "CCSS.MATH.CONTENT.7.RP.A.2.a",
+            "scd:competencyStatement": "Decide whether two quantities are in a proportional relationship by testing for equivalent ratios.",
+            "ceasn:educationLevel": ["07"]
+        },
+        {
+            "@type": "CompetencyDefinition",
+            "@id": "https://example.org/scd/math/7rp2c",
+            "scd:referenceCode": "CCSS.MATH.CONTENT.7.RP.A.2.c",
+            "scd:competencyStatement": "Represent proportional relationships by equations, such as y = kx.",
+            "ceasn:educationLevel": ["07"]
+        }
+    ]
+}
