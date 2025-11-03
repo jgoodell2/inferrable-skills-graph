@@ -1,5 +1,5 @@
 {
-    "@context": "https://standards.ieee.org/1484.20.3/context.jsonld",
+    "@context": "https://opensource.ieee.org/scd/scd/resources/context.jsonld",
     "@graph": [
         {
             "@type": "scd:CompetencyFramework",
